@@ -1,0 +1,412 @@
+================================================================================
+                        SIKDAHU - DESIGN SUMMARY
+           Sistem Informasi Kependudukan Desa Cidahu
+================================================================================
+
+I. INFORMASI UMUM
+--------------------------------------------------------------------------------
+Nama Aplikasi    : SIKDAHU (Sistem Informasi Kependudukan Cidahu)
+Versi            : 1.0.0
+Framework        : Next.js 16+ dengan App Router
+Database         : SQLite (Prisma ORM)
+UI Library       : shadcn/ui dengan Tailwind CSS 4
+Bahasa           : TypeScript 5
+
+================================================================================
+II. FITUR UTAMA
+================================================================================
+
+1. AUTENTIKASI & OTORISASI
+   ├── Login Admin (username/password)
+   ├── Akses Masyarakat Umum (read-only)
+   ├── Session Management
+   └── Perubahan Kredensial Admin
+
+2. DASHBOARD
+   ├── Statistik Penduduk (Total, Laki-laki, Perempuan)
+   ├── Jumlah RT (Rukun Tetangga)
+   ├── Distribusi Jenis Kelamin
+   └── Aksi Cepat (Quick Actions)
+
+3. DATA PENDUDUK
+   ├── CRUD Data Penduduk
+   ├── Import dari Excel (.xlsx)
+   ├── Export ke Excel
+   ├── Filter & Pencarian
+   │   ├── Filter RT
+   │   ├── Filter Jenis Kelamin
+   │   ├── Filter Pendidikan
+   │   └── Filter Status Perkawinan
+   ├── Sorting
+   └── Pagination
+
+4. LAPORAN BULANAN
+   ├── Laporan Registrasi Kependudukan per RT
+   ├── Data Kelahiran
+   ├── Data Kematian
+   ├── Data Kedatangan
+   ├── Data Kepindahan
+   ├── Import dari Excel
+   ├── Export ke Excel
+   └── Inisialisasi dari Data Penduduk
+
+5. SURAT PENGANTAR
+   ├── Surat Keterangan Domisili
+   ├── Surat Keterangan Tidak Mampu
+   ├── Surat Keterangan Usaha
+   ├── Surat Pengantar Umum
+   ├── Surat Keterangan Kelahiran
+   ├── Surat Keterangan Kematian
+   ├── Preview Surat
+   └── Download DOCX
+
+6. PENGATURAN (Admin Only)
+   ├── Informasi Desa
+   │   ├── Nama Desa, Kecamatan, Kabupaten
+   │   ├── Alamat
+   │   └── Logo Desa
+   ├── Pejabat Desa
+   │   ├── Kepala Desa
+   │   ├── Sekretaris
+   │   └── Kasi Pemerintahan
+   ├── Tema Aplikasi
+   │   ├── Mode Terang/Gelap
+   │   └── Pilihan Warna Tema
+   └── Pengaturan Akun Admin
+       ├── Ubah Nama
+       ├── Ubah Username
+       └── Ubah Password
+
+================================================================================
+III. STRUKTUR DATABASE
+================================================================================
+
+1. AdminUser
+   ├── id (String, Primary Key)
+   ├── username (String, Unique)
+   ├── password (String, Hashed)
+   ├── name (String)
+   ├── createdAt (DateTime)
+   └── updatedAt (DateTime)
+
+2. Session
+   ├── id (String, Primary Key)
+   ├── userId (String, FK)
+   ├── role (String: admin/public)
+   ├── createdAt (DateTime)
+   └── expiresAt (DateTime)
+
+3. Settings
+   ├── id (String, Primary Key)
+   ├── kepalaDesa (String)
+   ├── sekretarisDesa (String)
+   ├── kasiPemerintahan (String)
+   ├── themeColor (String)
+   ├── themeMode (String: light/dark)
+   ├── desaName (String)
+   ├── kecamatanName (String)
+   ├── kabupatenName (String)
+   ├── alamatDesa (String)
+   ├── logo (String, Base64)
+   ├── createdAt (DateTime)
+   └── updatedAt (DateTime)
+
+4. Penduduk
+   ├── id (String, Primary Key)
+   ├── nkk (String, Nomor Kartu Keluarga)
+   ├── nik (String, Unique, 16 digit)
+   ├── nama (String)
+   ├── shdk (String, Status Hubungan Dalam Keluarga)
+   ├── gender (String: L/P)
+   ├── tempatLahir (String)
+   ├── tanggalLahir (String)
+   ├── umur (Int)
+   ├── alamat (String)
+   ├── rt (String)
+   ├── rw (String)
+   ├── namaAyah (String, nullable)
+   ├── namaIbu (String, nullable)
+   ├── pendidikan (String, nullable)
+   ├── status (String: aktif/meninggal/pindah)
+   ├── createdAt (DateTime)
+   └── updatedAt (DateTime)
+
+5. LaporanBulanan
+   ├── id (String, Primary Key)
+   ├── bulan (Int, 1-12)
+   ├── tahun (Int)
+   ├── rt (String)
+   ├── jumlahLaluL, jumlahLaluP, jumlahLaluTotal (Int)
+   ├── lahirL, lahirP, lahirTotal (Int)
+   ├── matiL, matiP, matiTotal (Int)
+   ├── datangL, datangP, datangTotal (Int)
+   ├── pindahL, pindahP, pindahTotal (Int)
+   ├── jumlahIniL, jumlahIniP, jumlahIniTotal (Int)
+   ├── jumlahKK, wajibKTP, punyaKTP, punyaKK (Int)
+   ├── belumKTP, belumKK (Int)
+   └── Unique: [bulan, tahun, rt]
+
+6. EventKependudukan
+   ├── id (String, Primary Key)
+   ├── jenis (String: lahir/mati/datang/pindah)
+   ├── pendudukId (String, FK, nullable)
+   ├── nama, nik, nkk, gender (nullable)
+   ├── tempatLahir, tanggalLahir (nullable)
+   ├── alamat, rt, rw (nullable)
+   ├── namaAyah, namaIbu, pendidikan (nullable)
+   ├── tanggalEvent (nullable)
+   ├── keterangan (nullable)
+   ├── bulan, tahun (Int)
+   └── createdAt, updatedAt (DateTime)
+
+7. SuratPengantar
+   ├── id (String, Primary Key)
+   ├── nomor (String)
+   ├── bulan, tahun (Int)
+   ├── tanggalSurat (String)
+   ├── bulanLaporan (String)
+   └── tahunLaporan (Int)
+
+================================================================================
+IV. STRUKTUR PROYEK
+================================================================================
+
+/sikdahu/
+├── prisma/
+│   └── schema.prisma          # Database schema
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── auth/route.ts           # Authentication
+│   │   │   ├── settings/route.ts       # Settings CRUD
+│   │   │   ├── settings/public/route.ts # Public settings
+│   │   │   ├── penduduk/
+│   │   │   │   ├── route.ts            # CRUD
+│   │   │   │   ├── [id]/route.ts       # Single item
+│   │   │   │   ├── import/route.ts     # Import Excel
+│   │   │   │   └── export/route.ts     # Export Excel
+│   │   │   ├── laporan/
+│   │   │   │   ├── route.ts            # CRUD
+│   │   │   │   ├── init/route.ts       # Initialize
+│   │   │   │   ├── import/route.ts     # Import Excel
+│   │   │   │   └── export/route.ts     # Export Excel
+│   │   │   ├── events/
+│   │   │   │   ├── route.ts            # CRUD
+│   │   │   │   └── import/route.ts     # Import Excel
+│   │   │   ├── statistik/route.ts      # Statistics
+│   │   │   ├── surat/
+│   │   │   │   └── route.ts            # Letter generation
+│   │   │   └── admin/name/route.ts     # Admin credentials
+│   │   ├── layout.tsx                  # Root layout
+│   │   ├── page.tsx                    # Main page
+│   │   └── globals.css                 # Global styles
+│   ├── components/ui/                  # shadcn/ui components
+│   ├── hooks/                          # Custom hooks
+│   └── lib/
+│       ├── db.ts                       # Prisma client
+│       ├── auth.ts                     # Auth utilities
+│       └── utils.ts                    # Utility functions
+├── public/                             # Static files
+├── db/                                 # SQLite database
+├── upload/                             # Upload directory
+├── package.json
+├── tailwind.config.ts
+├── next.config.ts
+└── tsconfig.json
+
+================================================================================
+V. API ENDPOINTS
+================================================================================
+
+AUTHENTICATION
+├── POST   /api/auth          # Login
+├── GET    /api/auth          # Check session
+└── DELETE /api/auth          # Logout
+
+SETTINGS
+├── GET    /api/settings      # Get settings (auth required)
+├── PUT    /api/settings      # Update settings (admin only)
+└── GET    /api/settings/public # Get public settings
+
+PENDUDUK
+├── GET    /api/penduduk      # List (paginated, filtered)
+├── POST   /api/penduduk      # Create
+├── PUT    /api/penduduk/[id] # Update
+├── DELETE /api/penduduk/[id] # Delete
+├── POST   /api/penduduk/import # Import Excel
+└── GET    /api/penduduk/export # Export Excel
+
+LAPORAN BULANAN
+├── GET    /api/laporan       # List by month/year
+├── POST   /api/laporan       # Create/Update
+├── POST   /api/laporan/init  # Initialize from data
+├── POST   /api/laporan/import # Import Excel
+└── GET    /api/laporan/export # Export Excel
+
+EVENTS
+├── GET    /api/events        # List by type/month/year
+├── POST   /api/events        # Create
+├── PUT    /api/events        # Update
+├── DELETE /api/events?id=    # Delete
+└── POST   /api/events/import # Import Excel
+
+SURAT
+├── GET    /api/surat         # List letters
+└── POST   /api/surat/generate # Generate DOCX
+
+STATISTIK
+└── GET    /api/statistik     # Population statistics
+
+ADMIN
+├── GET    /api/admin/name    # Get admin info
+└── PUT    /api/admin/name    # Update credentials
+
+================================================================================
+VI. KOMPONEN UI UTAMA
+================================================================================
+
+1. LoginScreen
+   ├── Card dengan logo/nama aplikasi
+   ├── Form login (username/password)
+   └── Tombol akses masyarakat umum
+
+2. Header
+   ├── Logo & nama aplikasi
+   ├── Info user dengan badge role
+   ├── Toggle tema (dark/light)
+   └── Tombol logout
+
+3. Navigation Tabs
+   ├── Dashboard
+   ├── Data Penduduk
+   ├── Laporan Bulanan
+   ├── Surat Pengantar
+   └── Pengaturan
+
+4. Dashboard Section
+   ├── StatCard (animasi counter)
+   ├── Quick Actions
+   └── Charts placeholder
+
+5. Data Penduduk Section
+   ├── Toolbar (search, filter, import/export)
+   ├── Table dengan sorting
+   ├── Pagination
+   └── Modal add/edit
+
+6. Laporan Bulanan Section
+   ├── Sub-tabs (Laporan, Lahir, Mati, Datang, Pindah)
+   ├── Bulan/Tahun selector
+   ├── Table laporan per RT
+   ├── Event tables
+   └── Import/Export buttons
+
+7. Surat Pengantar Section
+   ├── Form input
+   ├── Paper size selector
+   ├── Preview panel
+   └── Download button
+
+8. Pengaturan Section
+   ├── Admin account settings
+   ├── Village info form
+   ├── Logo upload
+   └── Theme settings
+
+================================================================================
+VII. TEMA & STYLING
+================================================================================
+
+COLOR PALETTE (Primary: Emerald/Teal)
+├── Primary      : #00d4aa (dark), #00b894 (light)
+├── Background   : #0f1419 (dark), #f8fafc (light)
+├── Card         : #1e2a3a (dark), #ffffff (light)
+├── Border       : #2d3f52 (dark), #e2e8f0 (light)
+├── Muted        : #8899a6 (dark), #64748b (light)
+└── Accent       : #00d4aa
+
+THEME COLORS (Pilihan)
+├── Emerald : #00d4aa
+├── Blue    : #4da6ff
+├── Purple  : #a855f7
+├── Orange  : #f97316
+├── Pink    : #ec4899
+└── Cyan    : #06b6d4
+
+TYPOGRAPHY
+├── Font Sans   : Plus Jakarta Sans
+└── Font Display: Space Grotesk
+
+================================================================================
+VIII. DEPENDENCIES UTAMA
+================================================================================
+
+Production Dependencies:
+├── next              : ^16.1.1
+├── react             : ^19.0.0
+├── react-dom         : ^19.0.0
+├── prisma            : ^6.11.1
+├── @prisma/client    : ^6.19.2
+├── @radix-ui/*       : Various components
+├── tailwindcss       : ^4
+├── xlsx              : ^0.18.5
+├── docx              : ^9.6.0
+├── zod               : ^4.0.2
+├── next-auth         : ^4.24.11
+├── next-themes       : ^0.4.6
+├── lucide-react      : ^0.525.0
+├── framer-motion     : ^12.23.2
+├── recharts          : ^2.15.4
+├── date-fns          : ^4.1.0
+└── zustand           : ^5.0.6
+
+Development Dependencies:
+├── typescript        : ^5
+├── eslint            : ^9
+├── eslint-config-next: ^16.1.1
+└── @tailwindcss/postcss: ^4
+
+================================================================================
+IX. VARIABEL LINGKUNGAN
+================================================================================
+
+DATABASE_URL="file:./db/custom.db"
+NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+
+================================================================================
+X. SETUP & INSTALASI
+================================================================================
+
+1. Clone repository
+2. Install dependencies:
+   npm install atau bun install
+
+3. Setup database:
+   npx prisma db push
+
+4. Jalankan development server:
+   npm run dev atau bun run dev
+
+5. Buka browser: http://localhost:3000
+
+Default Login:
+├── Username: admin
+└── Password: admin123
+
+================================================================================
+XI. CATATAN PENGEMBANGAN
+================================================================================
+
+1. Database SQLite cocok untuk deployment single instance
+2. Untuk multi-user production, pertimbangkan PostgreSQL
+3. Logo disimpan sebagai Base64 string di database
+4. Session disimpan di database dengan expiry time
+5. Import Excel mendukung format .xlsx dan .xls
+6. Export Excel menggunakan library xlsx
+7. Surat DOCX menggunakan library docx
+
+================================================================================
+                        DOKUMEN INI DIBUAT OLEH: Z.AI
+                     TANGGAL: Maret 2025
+================================================================================
