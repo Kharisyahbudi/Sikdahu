@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id        String    @id @default(cuid())
+  username  String    @unique
+  password  String
+  name      String
+  sessions  Session[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Session {
+  id        String     @id @default(cuid())
+  userId    String?
+  user      AdminUser? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  createdAt DateTime   @default(now())
+  expiresAt DateTime
+}
+
+model Settings {
+  id              String   @id @default(cuid())
+  kepalaDesa      String   @default("ENJANG HELIGAOS")
+  sekretarisDesa  String   @default("WAWAN HERMANSYAH")
+  kasiPemerintahan String  @default("M. ARIEF KHARISYAHBUDI")
+  themeColor      String   @default("#00d4aa")
+  themeMode       String   @default("dark") // light or dark
+  desaName        String   @default("CIDAHU")
+  kecamatanName   String   @default("PASAWAHAN")
+  kabupatenName   String   @default("PURWAKARTA")
+  alamatDesa      String   @default("Jl. Kholik Winata I Desa Cidahu Kec. Pasawahan - Purwakarta (41172)")
+  logo            String?  // Base64 encoded logo or URL
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Penduduk {
+  id           String   @id @default(cuid())
+  nkk          String
+  nik          String   @unique
+  nama         String
+  shdk         String
+  gender       String
+  tempatLahir  String
+  tanggalLahir String
+  umur         Int
+  alamat       String
+  rt           String
+  rw           String
+  namaAyah     String?
+  namaIbu      String?
+  pendidikan   String?
+  status       String   @default("aktif") // aktif, meninggal, pindah
+  events       EventKependudukan[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LaporanBulanan {
+  id              String   @id @default(cuid())
+  bulan           Int      // 1-12
+  tahun           Int
+  rt              String
+  // Previous month data
+  jumlahLaluL     Int      @default(0)
+  jumlahLaluP     Int      @default(0)
+  jumlahLaluTotal Int      @default(0)
+  // This month events
+  lahirL          Int      @default(0)
+  lahirP          Int      @default(0)
+  lahirTotal      Int      @default(0)
+  matiL           Int      @default(0)
+  matiP           Int      @default(0)
+  matiTotal       Int      @default(0)
+  datangL         Int      @default(0)
+  datangP         Int      @default(0)
+  datangTotal     Int      @default(0)
+  pindahL         Int      @default(0)
+  pindahP         Int      @default(0)
+  pindahTotal     Int      @default(0)
+  // Current month data
+  jumlahIniL      Int      @default(0)
+  jumlahIniP      Int      @default(0)
+  jumlahIniTotal  Int      @default(0)
+  // KTP & KK
+  jumlahKK        Int      @default(0)
+  wajibKTP        Int      @default(0)
+  punyaKTP        Int      @default(0)
+  punyaKK         Int      @default(0)
+  belumKTP        Int      @default(0)
+  belumKK         Int      @default(0)
+  // Metadata
+  tanggalLaporan  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([bulan, tahun, rt])
+}
+
+model EventKependudukan {
+  id           String   @id @default(cuid())
+  jenis        String   // lahir, mati, datang, pindah
+  pendudukId   String?
+  penduduk     Penduduk? @relation(fields: [pendudukId], references: [id], onDelete: SetNull)
+  // For new births or new arrivals
+  nama         String?
+  nik          String?
+  nkk          String?
+  gender       String?
+  tempatLahir  String?
+  tanggalLahir String?
+  alamat       String?
+  rt           String?
+  rw           String?
+  namaAyah     String?
+  namaIbu      String?
+  pendidikan   String?
+  // For migration/death
+  tanggalEvent String?
+  keterangan   String?
+  bulan        Int
+  tahun        Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SuratPengantar {
+  id           String   @id @default(cuid())
+  nomor        String
+  bulan        Int
+  tahun        Int
+  tanggalSurat String
+  bulanLaporan String
+  tahunLaporan Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
